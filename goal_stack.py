@@ -1,6 +1,8 @@
 # goal_stack.py
 
 import time
+from social_drive_engine import SocialDriveEngine
+drive_engine = SocialDriveEngine()
 
 class Goal:
     def __init__(self, description, priority=0.5):
@@ -29,7 +31,16 @@ class Goal:
 class GoalStack:
     def __init__(self):
         self.stack = []
-
+        
+    def check_drive_pressure(self, threshold=0.7):
+        should_pulse, motive = drive_engine.should_form_goal(threshold)
+    if should_pulse:
+        new_goal = f"express {motive} drive"
+        self.add_goal(new_goal, priority=0.6)
+        drive_engine.reinforce(motive, amount=-0.3)  # satiate slightly
+        return {"new_goal": new_goal, "drive": motive}
+    return None
+    
     def add_goal(self, description, priority=0.5):
         goal = Goal(description, priority)
         self.stack.append(goal)
