@@ -1,6 +1,8 @@
 # social_mind.py
 
 import time
+from belief_registry import BeliefRegistry
+beliefs = BeliefRegistry()
 
 class SocialMind:
     def __init__(self):
@@ -57,8 +59,16 @@ class SocialMind:
             suggested_mood = "nostalgic"
         elif "anxious" in capsule.emotion_vector:
             suggested_mood = "reassuring"
-
+            # learn belief cues from capsule feedback
+        if capsule.feedback == "positive":
+            beliefs.update_belief(agent, "social_response", 0.7)
+        elif capsule.feedback == "uncertain":
+            beliefs.update_belief(agent, "trust_in_strategy", 0.5)
+        elif capsule.feedback == "negative":
+            beliefs.update_belief(agent, "reasoning_accuracy", 0.3)
         return {
+            "social_trust": beliefs.get_belief(agent, "social_response"),
+            "belief_gap": beliefs.detect_belief_gap(agent, "reasoning_accuracy", self_score=0.6),
             "agent": agent,
             "risk_of_confusion": bool(risks),
             "triggers_detected": risks,
