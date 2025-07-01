@@ -3,7 +3,7 @@
 
 import time
 from social_drive_engine import SocialDriveEngine
-from self_model import self_model  # if not globally defined, create local instance
+from self_model import self_model
 
 drive_engine = SocialDriveEngine()
 
@@ -24,6 +24,9 @@ class Goal:
         self.history.append(("demoted", time.time(), self.priority))
 
     def complete(self):
+        for skill in self_model.capabilities:
+            if skill in self.description:
+                self_model.update_capability(skill, +0.05)
         self.status = "completed"
         self.history.append(("completed", time.time()))
 
@@ -45,7 +48,6 @@ class GoalStack:
         return None
 
     def add_goal(self, description, priority=0.5):
-        # self_model bias (boost if she believes it's a strength)
         for skill in self_model.capabilities:
             if skill in description:
                 skill_score = self_model.capabilities[skill]
@@ -68,3 +70,14 @@ class GoalStack:
             "status": g.status,
             "age": round(time.time() - g.created_at, 1)
         } for g in self.stack]
+
+    def check_belief_gaps(self):
+        from social_mind import beliefs
+        gaps = []
+        for topic in ["reasoning_accuracy", "social_response"]:
+            gap = beliefs.detect_belief_gap("dane", topic, self_score=self_model.capabilities.get(topic, 0.5))
+            if gap:
+                new_goal = f"repair {gap['topic']} belief for {gap['person']}"
+                self.add_goal(new_goal, priority=0.7)
+                gaps.append(new_goal)
+        return gaps
